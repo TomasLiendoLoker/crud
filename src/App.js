@@ -101,13 +101,17 @@ function App() {
                 <li className="list-group-item" key={task.id}>
                   <span className="lead">{task.name}</span>
                   <button
+                    id={task.id}
                     className="btn btn-danger btn-sm float-right mx-2"
+                    disabled={editMode === true && task.id === id}
                     onClick={() => deleteTask(task.id)}
+                   
                   >
                     Eliminar
                   </button>
                   <button className="btn btn-warning btn-sm float-right"
-                  onClick={() => editTask(task)}>
+                  onClick={() => editTask(task)}
+                  >
                     Editar
                   </button>
                 </li>
