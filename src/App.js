@@ -1,12 +1,13 @@
 //hock
 import { isEmpty, size } from "lodash";
-import React, { useState } from "react";
+import React, { useState,useEffect} from "react";
 import shortid from "shortid";
+import {addDocument, deleteDocument, getCollection, updateDocument} from "./actions"
 
 function App() {
   //creamos un estado que guarda el nombre de la new task
   const [task, setTask] = useState("");
-  //creamos un estado para guardas todas las tareas
+  //creamos un estado para guardas todas las tareas -> tasks es un arreglo
   const [tasks, setTasks] = useState([]);
   //creamos un estado para editar la tarea
   //Se arranca en falso porque al inicio no arrancamos en estado modo -> X defecto en creacion
@@ -15,6 +16,18 @@ function App() {
    const [id, setId] = useState("")
   //Manejo de errores
   const [error, setError] = useState(null)
+
+  useEffect(() => {
+    //Metodo asincrono autoejecutable
+    (async () => {
+      //metodo asincrono recibe como parametro el nombre de la colección
+      const result = await getCollection("tasks")
+      if (result.statusResponse){
+        setTasks(result.data)
+      }
+    })()
+  }, [])
+
 
   const validForm = () =>{
     let isValid = true;
@@ -27,27 +40,40 @@ function App() {
   }
 
   //validar que el usuario agrego algo en la tarea
-  const addTask = (e) => {
+  const addTask = async (e) => {
     //Evitar que se recargue la pagina por el submit
     e.preventDefault();
     //libreria lodash -> Si la tarea es vacia
     if (!validForm()){
         return 
     }
+    const result = await addDocument("tasks", {name : task})
+    if (!result.statusResponse){
+      setError(result.error)
+      return
+    }
 
-    const newTask = {
-      //usamos shortid
-      id: shortid.generate(),
-      name: task,
-    };
+    // const newTask = {
+    //   //usamos shortid
+    //   id: shortid.generate(),
+    //   name: task,
+    // };
+
     // A la coleccion de tareas agregame la nueva tarea
     // Spread Operator
-    setTasks([...tasks, newTask]);
+    setTasks([...tasks, {id: result.data, name: task}]);
 
     //Dejamos el input listo para que pueda agregar otra tarea
     setTask("");
   };
-  const deleteTask = (id) => {
+
+
+  const deleteTask = async (id) => {
+    const result = await deleteDocument("tasks", id)
+    if(! result.statusResponse){
+      setError(result.error)
+      return
+    }
     //Dame todas las tareas menos la que quiero filtrar -> La que borro el usuario
     const filteredTask = tasks.filter((task) => task.id !== id);
     setTasks(filteredTask);
@@ -63,13 +89,20 @@ function App() {
   }
 
   //guardar la tarea modificada
-  const saveTask = (e) => {
+  const saveTask = async (e) => {
     //Evitar que se recargue la pagina por el submit
     e.preventDefault();
     //libreria lodash -> Si la tarea es vacia
     if (!validForm()){
       return 
   }
+  //actualizar tarea
+  const result = await updateDocument("tasks",id,{name: task})
+  if (!result.statusResponse){
+    setError(result.error)
+    return
+  }
+
     // A la coleccion de tareas agregame la nueva tarea
     // Spread Operator
     //setTasks([...tasks, newTask]);
